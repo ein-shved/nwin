@@ -1,7 +1,10 @@
 {
   rustPlatform,
+
   SDL2,
   SDL2_ttf,
+  fontconfig,
+  pkg-config,
 }:
 rustPlatform.buildRustPackage {
   pname = "nwin";
@@ -10,7 +13,13 @@ rustPlatform.buildRustPackage {
   buildInputs = [
     SDL2
     SDL2_ttf
+    fontconfig
   ];
+
+  nativeBuildInputs = [
+    pkg-config
+  ];
+
   src = builtins.path {
     filter = (
       path: type:

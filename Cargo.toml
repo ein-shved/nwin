@@ -10,6 +10,7 @@ edition = "2018"
 neovim-lib = { git = "https://github.com/glacambre/neovim-lib" }
 niri-ipc = "25.5.1"
 home = "0.5.3"
+fontconfig = "0.10.0"
 
 [dependencies.sdl2]
 version = "0.35.1"

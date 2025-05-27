@@ -1,6 +1,8 @@
 mod keys;
 
 use niri_ipc::socket::Socket as NiriSocket;
+use sdl2::ttf::Font;
+use sdl2::ttf::Sdl2TtfContext;
 
 use std::process::Command;
 
@@ -28,6 +30,8 @@ use sdl2::video::WindowContext;
 use sdl2::VideoSubsystem;
 
 use neovim_lib::{Neovim, NeovimApi, Session, UiAttachOptions, Value};
+
+use fontconfig::Fontconfig;
 
 type AtlasIndexKey = char;
 type NvimRow = usize;
@@ -828,6 +832,14 @@ const TRANSPARENT : Color = Color::RGBA(200,0,128,0);
 const REF: &str = include_str!("../.git/HEAD");
 const REF_MASTER: &str = include_str!("../.git/refs/heads/master");
 
+pub fn loadfont<'ttf>(ttf_context: &'ttf Sdl2TtfContext) ->Result<Font<'ttf, 'static>, String>
+{
+    let fc = Fontconfig::new().unwrap();
+    let font = fc.find("JetBrainsMono Nerd Font", None).unwrap();
+
+    ttf_context.load_font(font.path, 16)
+}
+
 pub fn main() -> Result<(), String> {
     env::remove_var("NVIM_LISTEN_ADDRESS");
 
@@ -902,18 +914,9 @@ pub fn main() -> Result<(), String> {
 
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
+
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
-
-    // use home crate to figure out path to ~/downloads/NotoSansMono/NotoSansMono-Regular.ttf
-    let mut _fontpath = String::new();
-    match home::home_dir() {
-        // this might not be a good way..
-        Some(path) => _fontpath.push_str(&path.to_string_lossy()),
-        None => println!("can't find font to use, check README.md"),
-    }
-    _fontpath.push_str("/downloads/NotoSansMono/NotoSansMono-Regular.ttf");
-
-    let font = ttf_context.load_font(_fontpath.to_string(), 16)?;
+    let font = loadfont(&ttf_context)?;
 
     let mut font_width = 1;
     let mut font_height = 1;
