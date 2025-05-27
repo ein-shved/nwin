@@ -961,10 +961,10 @@ pub fn main() -> Result<(), String> {
         options.set_rgb(true);
         options.set_linegrid_external(true);
         if has_ext_windows {
-            options
-                .set_messages_external(true)
-                .set_multigrid(true)
-                .set_windows_external(true);
+            // options
+            //     .set_messages_external(true)
+            //     .set_multigrid(true)
+            //     .set_windows_external(true);
         } else {
             println!(
                 "Warning: neovim server does not support external windows. Continuing without."
@@ -1106,11 +1106,17 @@ pub fn main() -> Result<(), String> {
                             || (row_count as usize) != grid.get_height()
                         {
                             // Let neovim know size changed
-                            if let Err(e) = nvim.ui_try_resize_grid(
-                                i64::try_from(*key).unwrap(),
+                            // if let Err(e) = nvim.ui_try_resize_grid(
+                            //     i64::try_from(*key).unwrap(),
+                            //     col_count.into(),
+                            //     row_count.into(),
+                            // )
+                            if let Err(e) = nvim.ui_try_resize(
                                 col_count.into(),
                                 row_count.into(),
-                            ) {
+                            )
+
+                            {
                                 eprintln!("{}", e);
                             }
                         }
