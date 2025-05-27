@@ -1,6 +1,6 @@
 mod keys;
 
-use swayipc::{Connection, NodeLayout};
+use niri_ipc::socket::Socket as NiriSocket;
 
 use std::process::Command;
 
@@ -486,37 +486,37 @@ impl NvimState {
         self.message_time = Instant::now();
         self.has_moved_since_last_message = false;
     }
-    pub fn win_hide(&mut self, sway: &mut Connection, win: NvimWinId) {
+    pub fn win_hide(&mut self, niri: &mut NiriSocket, win: NvimWinId) {
         let title = format!("Nwin - Grid {}", win);
         // Find the parent node of the window being split
-        let parent_node = sway
-            .get_tree()
-            .unwrap()
-            .find(|node| {
-                for n in &node.nodes {
-                    if let Some(str) = &n.name {
-                        if str == &title {
-                            return true;
-                        }
-                    }
-                }
-                false
-            })
-            .unwrap();
-        if parent_node.layout != NodeLayout::Tabbed {
-            let node = parent_node
-                .find(|n| {
-                    if let Some(str) = &n.name {
-                        return str == &title;
-                    }
-                    false
-                })
-                .unwrap();
-            sway.run_command(format!("[con_id={}] splitv", node.id))
-                .unwrap();
-            sway.run_command(format!("[con_id={}] layout tabbed", node.id))
-                .unwrap();
-        }
+       // let parent_node = niri
+       //     .get_tree()
+       //     .unwrap()
+       //     .find(|node| {
+       //         for n in &node.nodes {
+       //             if let Some(str) = &n.name {
+       //                 if str == &title {
+       //                     return true;
+       //                 }
+       //             }
+       //         }
+       //         false
+       //     })
+       //     .unwrap();
+       // if parent_node.layout != NodeLayout::Tabbed {
+       //     let node = parent_node
+       //         .find(|n| {
+       //             if let Some(str) = &n.name {
+       //                 return str == &title;
+       //             }
+       //             false
+       //         })
+       //         .unwrap();
+       //     niri.run_command(format!("[con_id={}] splitv", node.id))
+       //         .unwrap();
+       //     niri.run_command(format!("[con_id={}] layout tabbed", node.id))
+       //         .unwrap();
+       // }
     }
     pub fn win_pos(
         &mut self,
@@ -532,49 +532,49 @@ impl NvimState {
     }
     pub fn win_split(
         &mut self,
-        sway: &mut Connection,
+        niri: &mut NiriSocket,
         _win1: NvimWinId,
         grid1: NvimGridId,
         _win2: NvimWinId,
         _grid2: NvimGridId,
         flags: SplitDirection,
     ) {
-        let (split_command, desired_sway_layout) = match flags {
-            SplitDirection::Above | SplitDirection::Below => ("splitv", NodeLayout::SplitV),
-            _ => ("splith", NodeLayout::SplitH),
-        };
-        let title = format!("Nwin - Grid {}", grid1);
-        // Find the parent node of the window being split
-        let parent_node = sway
-            .get_tree()
-            .unwrap()
-            .find(|node| {
-                for n in &node.nodes {
-                    if let Some(str) = &n.name {
-                        if str == &title {
-                            return true;
-                        }
-                    }
-                }
-                false
-            })
-            .unwrap();
-        if parent_node.layout != desired_sway_layout {
-            let node = parent_node
-                .find(|n| {
-                    if let Some(str) = &n.name {
-                        return str == &title;
-                    }
-                    false
-                })
-                .unwrap();
-            let command = format!("[con_id={}] {}", node.id, split_command);
-            sway.run_command(command).unwrap();
-        }
+       // let (split_command, desired_sway_layout) = match flags {
+       //     SplitDirection::Above | SplitDirection::Below => ("splitv", NodeLayout::SplitV),
+       //     _ => ("splith", NodeLayout::SplitH),
+       // };
+       // let title = format!("Nwin - Grid {}", grid1);
+       // // Find the parent node of the window being split
+       // let parent_node = niri
+       //     .get_tree()
+       //     .unwrap()
+       //     .find(|node| {
+       //         for n in &node.nodes {
+       //             if let Some(str) = &n.name {
+       //                 if str == &title {
+       //                     return true;
+       //                 }
+       //             }
+       //         }
+       //         false
+       //     })
+       //     .unwrap();
+       // if parent_node.layout != desired_sway_layout {
+       //     let node = parent_node
+       //         .find(|n| {
+       //             if let Some(str) = &n.name {
+       //                 return str == &title;
+       //             }
+       //             false
+       //         })
+       //         .unwrap();
+       //     let command = format!("[con_id={}] {}", node.id, split_command);
+       //     niri.run_command(command).unwrap();
+       // }
     }
 }
 
-fn do_redraw(state: &mut NvimState, sway: &mut Connection, args: Drain<'_, Value>) {
+fn do_redraw(state: &mut NvimState, niri: &mut NiriSocket, args: Drain<'_, Value>) {
     for update_events in args {
         if let Value::Array(update_events) = update_events {
             let mut update_events_iter = update_events.into_iter();
@@ -689,7 +689,7 @@ fn do_redraw(state: &mut NvimState, sway: &mut Connection, args: Drain<'_, Value
                             "win_hide" => {
                                 let mut args = arr.unwrap().into_iter();
                                 state.win_hide(
-                                    sway,
+                                    niri,
                                     args.next().unwrap().as_u64().unwrap() as NvimWinId,
                                 );
                             }
@@ -717,7 +717,7 @@ fn do_redraw(state: &mut NvimState, sway: &mut Connection, args: Drain<'_, Value
                             "win_split" => {
                                 let mut args = arr.unwrap().into_iter();
                                 state.win_split(
-                                    sway,
+                                    niri,
                                     args.next().unwrap().as_u64().unwrap(),
                                     args.next().unwrap().as_u64().unwrap(),
                                     args.next().unwrap().as_u64().unwrap(),
@@ -831,7 +831,7 @@ const REF_MASTER: &str = include_str!("../.git/refs/heads/master");
 pub fn main() -> Result<(), String> {
     env::remove_var("NVIM_LISTEN_ADDRESS");
 
-    let mut sway = Connection::new().unwrap();
+    let mut niri = NiriSocket::connect().unwrap();
 
     // Create the command used to run neovim. We swallow the arguments we understand and forward
     // the rest to neovim.
@@ -1030,7 +1030,7 @@ pub fn main() -> Result<(), String> {
                 if let Some(pos) = last_flush_position {
                     do_redraw(
                         &mut state,
-                        &mut sway,
+                        &mut niri,
                         redraw_messages.drain(0..redraw_messages.len() - pos),
                     );
                 }
